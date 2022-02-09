@@ -7,6 +7,8 @@ import za.co.entelect.challenge.enums.Terrain;
 
 import java.util.*;
 
+import org.javatuples.Pair;
+
 import static java.lang.Math.max;
 
 import java.security.SecureRandom;
@@ -24,6 +26,7 @@ public class Bot {
     private final static Command BOOST = new BoostCommand();
     private final static Command EMP = new EmpCommand();
     private final static Command FIX = new FixCommand();
+    private final static Command NOTHING = new DoNothingCommand();
 
     private final static Command TURN_RIGHT = new ChangeLaneCommand(1);
     private final static Command TURN_LEFT = new ChangeLaneCommand(-1);
@@ -38,49 +41,38 @@ public class Bot {
         Car myCar = gameState.player;
         Car opponent = gameState.opponent;
 
-        //Basic fix logic
-        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block, gameState);
-        List<Object> nextBlocks = blocks.subList(0,1);
+        // //Basic fix logic
+        // List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block, gameState);
+        // List<Object> nextBlocks = blocks.subList(0,1);
 
-        //Fix first if too damaged to move
-        if(myCar.damage == 5) {
-            return FIX;
-        }
-        //Accelerate first if going to slow
-        if(myCar.speed <= 3) {
-            return ACCELERATE;
-        }
+        // //Accelerate first if going to slow
+        // if(myCar.speed <= 3) {
+        //     return ACCELERATE;
+        // }
 
-        //Basic fix logic
-        if(myCar.damage >= 5) {
-            return FIX;
-        }
+        // //Basic fix logic
+        // if(myCar.damage >= 2) {
+        //     return FIX;
+        // }
 
-        //Basic avoidance logic
-        if (blocks.contains(Terrain.MUD) || nextBlocks.contains(Terrain.WALL)) {
-            if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
-                return LIZARD;
-            }
-            if (nextBlocks.contains(Terrain.MUD) || nextBlocks.contains(Terrain.WALL)) {
-                int i = random.nextInt(directionList.size());
-                return directionList.get(i);
-            }
-        }
+        // //Basic avoidance logic
+        // if (blocks.contains(Terrain.MUD) || nextBlocks.contains(Terrain.WALL)) {
+        //     if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
+        //         return LIZARD;
+        //     }
+        //     if (nextBlocks.contains(Terrain.MUD) || nextBlocks.contains(Terrain.WALL)) {
+        //         int i = random.nextInt(directionList.size());
+        //         return directionList.get(i);
+        //     }
+        // }
 
-        //Basic improvement logic
-        if (hasPowerUp(PowerUps.BOOST, myCar.powerups)) {
-            return BOOST;
-        }
+        // //Basic improvement logic
+        // if (hasPowerUp(PowerUps.BOOST, myCar.powerups)) {
+        //     return BOOST;
+        // }
 
-        //Basic aggression logic
-        if (myCar.speed == maxSpeed) {
-            if (hasPowerUp(PowerUps.OIL, myCar.powerups)) {
-                return OIL;
-            }
-            if (hasPowerUp(PowerUps.EMP, myCar.powerups)) {
-                return EMP;
-            }
-        }
+        // //Basic aggression logic
+        // offensiveSearch(gameState);
 
         return ACCELERATE;
     }
@@ -92,6 +84,17 @@ public class Bot {
             }
         }
         return false;
+    }
+
+    private int countPowerUp(PowerUps powerUpToCheck, PowerUps[] available) {
+        int count = 0;
+
+        for (PowerUps powerUp: available) {
+            if (powerUp.equals(powerUpToCheck)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -115,4 +118,39 @@ public class Bot {
         return blocks;
     }
 
+
+    private Command offensiveSearch(GameState gameState){
+        Car myCar = gameState.player;
+        Car opponent = gameState.opponent;
+        ArrayList<Pair<Integer, Command>> actions = new ArrayList<Pair<Integer, Command>>();
+
+        Comparator<Pair<Integer, Command>> comparePair = (Pair<Integer, Command> p1, Pair<Integer, Command> p2) 
+            -> p1.getValue0().compareTo(p2.getValue0());
+
+        // oil logic
+        if (hasPowerUp(PowerUps.OIL, myCar.powerups)) {
+
+            // too many oil, just drop
+            if (countPowerUp(PowerUps.OIL, myCar.powerups) > 3){
+                actions.add(Pair.with(10, OIL));
+            }
+
+            // drop oil to opponent behind
+            if (opponent.position.lane == myCar.position.lane) {
+                if (opponent.position.block == myCar.position.block - 1){
+                    actions.add(Pair.with(1, OIL));
+                }
+
+            }
+        }
+
+        Collections.sort(actions, comparePair);
+        if (actions.size() > 0){
+            return actions.get(0).getValue1();
+        } else {
+            return NOTHING;
+        }
+    }
+
 }
+
