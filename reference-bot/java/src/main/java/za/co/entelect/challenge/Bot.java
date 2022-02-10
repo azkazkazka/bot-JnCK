@@ -11,6 +11,7 @@ import org.javatuples.Pair;
 
 import static java.lang.Math.max;
 
+import java.rmi.activation.Activator;
 import java.security.SecureRandom;
 
 public class Bot {
@@ -41,40 +42,42 @@ public class Bot {
         Car myCar = gameState.player;
         Car opponent = gameState.opponent;
 
-        // //Basic fix logic
-        // List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block, gameState);
-        // List<Object> nextBlocks = blocks.subList(0,1);
+        //Basic fix logic
+        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block, gameState);
+        List<Object> nextBlocks = blocks.subList(0,1);
 
-        // //Accelerate first if going to slow
-        // if(myCar.speed <= 3) {
-        //     return ACCELERATE;
-        // }
+        //Basic avoidance logic
+        if (blocks.contains(Terrain.MUD) || nextBlocks.contains(Terrain.WALL)) {
+            if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
+                return LIZARD;
+            }
+            if (nextBlocks.contains(Terrain.MUD) || nextBlocks.contains(Terrain.WALL)) {
+                int i = random.nextInt(directionList.size());
+                return directionList.get(i);
+            }
+        }
 
-        // //Basic fix logic
-        // if(myCar.damage >= 2) {
-        //     return FIX;
-        // }
+        //Basic fix logic
+        if(myCar.damage >= 3) {
+            return FIX;
+        }
 
-        // //Basic avoidance logic
-        // if (blocks.contains(Terrain.MUD) || nextBlocks.contains(Terrain.WALL)) {
-        //     if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
-        //         return LIZARD;
-        //     }
-        //     if (nextBlocks.contains(Terrain.MUD) || nextBlocks.contains(Terrain.WALL)) {
-        //         int i = random.nextInt(directionList.size());
-        //         return directionList.get(i);
-        //     }
-        // }
+        //Accelerate first if going to slow
+        if(myCar.speed <= 3) {
+            return ACCELERATE;
+        }
+        
+        //Basic improvement logic
+        if (hasPowerUp(PowerUps.BOOST, myCar.powerups)) {
+            return BOOST;
+        }
 
-        // //Basic improvement logic
-        // if (hasPowerUp(PowerUps.BOOST, myCar.powerups)) {
-        //     return BOOST;
-        // }
+        //Basic aggression logic
+        if (hasPowerUp(PowerUps.OIL, myCar.powerups) || hasPowerUp(PowerUps.EMP, myCar.powerups)){
+            return offensiveSearch(gameState);
+        }
 
-        // //Basic aggression logic
-        // offensiveSearch(gameState);
-
-        return ACCELERATE;
+        return NOTHING;
     }
 
     private Boolean hasPowerUp(PowerUps powerUpToCheck, PowerUps[] available) {
@@ -122,8 +125,12 @@ public class Bot {
     private Command offensiveSearch(GameState gameState){
         Car myCar = gameState.player;
         Car opponent = gameState.opponent;
+        //create array with tuples as pair
+        //tuples contain weight of the command and the command itself
+        //used for prioritizing some move
         ArrayList<Pair<Integer, Command>> actions = new ArrayList<Pair<Integer, Command>>();
 
+        //comparator for weight
         Comparator<Pair<Integer, Command>> comparePair = (Pair<Integer, Command> p1, Pair<Integer, Command> p2) 
             -> p1.getValue0().compareTo(p2.getValue0());
 
@@ -141,11 +148,28 @@ public class Bot {
                     actions.add(Pair.with(1, OIL));
                 }
 
+            // there should be more logic to this
             }
         }
 
+        //Cybertruck logic
+        //bit hard to implement
+
+        // EMP logic
+        if (hasPowerUp((PowerUps.EMP), myCar.powerups) && myCar.position.block > opponent.position.block){
+            if (Math.abs(myCar.position.lane - opponent.position.lane) <= 1){
+                // this basically, if we are ahead of the opponent and not in the same lane as them
+                if (myCar.position.lane != opponent.position.lane){
+                    actions.add(Pair.with(0, EMP));
+                }
+            }
+        }
+
+
+        // sort depends on the weight of command
         Collections.sort(actions, comparePair);
         if (actions.size() > 0){
+            // take the priority(min) command
             return actions.get(0).getValue1();
         } else {
             return NOTHING;

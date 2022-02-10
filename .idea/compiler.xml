@@ -6,8 +6,13 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="reference-bot" />
+        <module name="java-starter-bot" />
+        <module name="java-reference-bot" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="java-reference-bot" target="8" />
+      <module name="java-starter-bot" target="8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
