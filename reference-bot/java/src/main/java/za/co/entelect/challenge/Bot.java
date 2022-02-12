@@ -11,25 +11,26 @@ import org.javatuples.Pair;
 
 import static java.lang.Math.max;
 
-import java.rmi.activation.Activator;
+// import java.rmi.activation.Activator;
 import java.security.SecureRandom;
 
 public class Bot {
 
     private static final int maxSpeed = 9;
-    private List<Command> directionList = new ArrayList<>();
     private static final int visibility = 20;
+    private static final int nullBlocks = 999;
+    private List<Command> directionList = new ArrayList<>();
 
     private final Random random;
 
-    private final static Command ACCELERATE = new AccelerateCommand();
-    private final static Command DECELERATE = new DecelerateCommand();
-    private final static Command LIZARD = new LizardCommand();
     private final static Command OIL = new OilCommand();
-    private final static Command BOOST = new BoostCommand();
     private final static Command EMP = new EmpCommand();
     private final static Command FIX = new FixCommand();
+    private final static Command BOOST = new BoostCommand();
+    private final static Command LIZARD = new LizardCommand();
     private final static Command NOTHING = new DoNothingCommand();
+    private final static Command ACCELERATE = new AccelerateCommand();
+    private final static Command DECELERATE = new DecelerateCommand();
 
     private final static Command TURN_RIGHT = new ChangeLaneCommand(1);
     private final static Command TURN_LEFT = new ChangeLaneCommand(-1);
@@ -70,17 +71,17 @@ public class Bot {
         int curdamage, leftdamage, rightdamage;
 
         curdamage = countTotalDamage(blocks, curSpeed + 1);
-        if (!leftblocks.isEmpty()){
-            leftdamage = countTotalDamage(leftblocks, curSpeed);
+        if (leftblocks.isEmpty()){
+            leftdamage = nullBlocks;
         }
         else{
-            leftdamage = 9999;
+            leftdamage = countTotalDamage(leftblocks, curSpeed);;
         }
-        if (!rightblocks.isEmpty()){
+        if (rightblocks.isEmpty()){
+            rightdamage = nullBlocks;
+        }
+        else{
             rightdamage = countTotalDamage(rightblocks, curSpeed);
-        }
-        else{
-            rightdamage = 9999;
         }
 
         // compare damage of each route
@@ -150,31 +151,42 @@ public class Bot {
                 if (laneList[i] == null || laneList[i].terrain == Terrain.FINISH) {
                     break;
                 }
+                if (laneList[i].cybertruck){
+                    blocks.add("CYBERTRUCK");
+                }
                 blocks.add(laneList[i].terrain);
             }
         }
         return blocks;
     }
 
+    // get previous/next speed state
+    public int getNearbySpeed(int curSpeed, int dir){
+        if (curSpeed == 0 || curSpeed == 15){
+            return -1;
+        }
+        else{
+            int curIdx = speedState.indexOf(curSpeed);
+            return speedState.get(curIdx + dir);
+        }
+    }
+
+    // count damage of each lanes
     private int countTotalDamage(List<Object> blocks, int steps){
         int count = 0;
         if (blocks.size() < steps){
             steps = blocks.size();
         }
         for (int i = 0; i < steps; i++){
-            if (blocks.get(i) == Terrain.MUD){
+            if (blocks.get(i) == Terrain.MUD || blocks.get(i) == Terrain.OIL_SPILL){
                 count += 1;
             }
-            else if (blocks.get(i) == Terrain.OIL_SPILL){
-                count += 1;
-            }
-            else if (blocks.get(i) == Terrain.WALL){
+            else if (blocks.get(i) == Terrain.WALL || blocks.get(i) == "CYBERTRUCK"){
                 count += 2;
             }
         }
         return count;
     }
-
 
     private Command offensiveSearch(GameState gameState){
         Car myCar = gameState.player;
@@ -190,18 +202,15 @@ public class Bot {
 
         // oil logic
         if (hasPowerUp(PowerUps.OIL, myCar.powerups)) {
-
             // too many oil, just drop
             if (countPowerUp(PowerUps.OIL, myCar.powerups) > 3){
                 actions.add(Pair.with(10, OIL));
             }
-
             // drop oil to opponent behind
             if (opponent.position.lane == myCar.position.lane) {
                 if (opponent.position.block == myCar.position.block - 1){
                     actions.add(Pair.with(1, OIL));
                 }
-
             // there should be more logic to this
             }
         }
@@ -219,7 +228,6 @@ public class Bot {
             }
         }
 
-
         // sort depends on the weight of command
         Collections.sort(actions, comparePair);
         if (actions.size() > 0){
@@ -229,16 +237,5 @@ public class Bot {
             return NOTHING;
         }
     }
-
-    public int getNearbySpeed(int curSpeed, int dir){
-        if (curSpeed == 0 || curSpeed == 15){
-            return -1;
-        }
-        else{
-            int curIdx = speedState.indexOf(curSpeed);
-            return speedState.get(curIdx + dir);
-        }
-    }
-
 }
 
