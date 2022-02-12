@@ -19,6 +19,7 @@ public class Bot {
     private static final int maxSpeed = 9;
     private static final int visibility = 20;
     private static final int nullBlocks = 999;
+    private static final int maxBoostSpeed = 15;
     private List<Command> directionList = new ArrayList<>();
 
     private final Random random;
@@ -67,9 +68,13 @@ public class Bot {
             return FIX;
         }
 
-        if ((curSpeed == maxBoostSpeed) || ((curSpeed == maxSpeed) && (curDamage == 1))){
-            if (checkPowerUp(PowerUps.LIZARD, myCar.powerups)){
-                return USE_LIZARD;
+        if (curSpeed == 0){
+            return ACCELERATE;
+        }
+
+        if ((curSpeed == maxBoostSpeed) || ((curSpeed == maxSpeed) && (damage == 1))){
+            if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)){
+                return LIZARD;
             }
         }
 
@@ -94,13 +99,13 @@ public class Bot {
         int frontBoost, leftBoost, rightBoost;
         frontBoost = countBoostLizard(blocks, curSpeed + 1);
 
-        if (!leftBlocks.isEmpty()){
+        if (!leftblocks.isEmpty()){
             leftBoost = countBoostLizard(leftblocks, curSpeed);
         } else{
             leftBoost = -1;
         }
         
-        if (!rightBlocks.isEmpty()){
+        if (!rightblocks.isEmpty()){
             rightBoost = countBoostLizard(rightblocks, curSpeed);
         } else{
             rightBoost = -1;
@@ -112,16 +117,14 @@ public class Bot {
             Arrays.sort(check);
             int bestRoute = check[0];
 
-            
-
             // compare with accelerate & decelerate case (BAGIAN INI BLM DIPIKIRIN BET TP YAUDALAYA)
             if (bestRoute == curdamage){
                 // check accelerate
                 if (higherSpeed != -1){
                     int acclrtdamage = countTotalDamage(blocks, higherSpeed + 1);
                     if (acclrtdamage <= 3 || (acclrtdamage/curdamage) <= (higherSpeed/curSpeed)){
-                        if (checkPowerUp(PowerUps.BOOST, myCar.powerups)){
-                            return USE_BOOST;
+                        if (hasPowerUp(PowerUps.BOOST, myCar.powerups)){
+                            return BOOST;
                         } else {
                             return ACCELERATE;
                         }
@@ -155,13 +158,14 @@ public class Bot {
         float bestRoute = compare[2];
 
         // compare with accelerate & decelerate case (BAGIAN INI BLM DIPIKIRIN BET TP YAUDALAYA)
-        if (bestRoute == frontWeight){
+        // TINJAU ULANG
+        if (bestRoute == frontWeight && curdamage < 5){
             // check accelerate
             if (higherSpeed != -1){
                 int acclrtdamage = countTotalDamage(blocks, higherSpeed + 1);
                 if (acclrtdamage <= 3 || (acclrtdamage/curdamage) <= (higherSpeed/curSpeed)){
-                    if (checkPowerUp(PowerUps.BOOST, myCar.powerups)){
-                        return USE_BOOST;
+                    if (hasPowerUp(PowerUps.BOOST, myCar.powerups)){
+                        return BOOST;
                     } else {
                         return ACCELERATE;
                     }
@@ -177,12 +181,18 @@ public class Bot {
                     return DECELERATE;
                 }
             }
-            if (bestRoute == leftWeight){
+
+            // TINJAU ULANG
+            if (bestRoute == leftWeight && leftdamage < 5){
                 return TURN_LEFT;
             }
-            else{
+            else if (bestRoute == rightWeight && rightdamage < 5){
                 return TURN_RIGHT;
             }
+            else {
+                return NOTHING;
+            }
+            
         }
     }
 
@@ -261,7 +271,7 @@ public class Bot {
     private int countBoostLizard(List<Object> blocks, int speed){
         int count = 0;
         if (blocks.size() < speed){
-            steps = blocks.size();
+            speed = blocks.size();
         }
         for (int i = 0; i < speed; i++){
             if (blocks.get(i) == Terrain.BOOST){
