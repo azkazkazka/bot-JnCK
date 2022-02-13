@@ -75,6 +75,8 @@ public class Bot {
         if ((curSpeed == maxBoostSpeed) || ((curSpeed == maxSpeed) && (damage == 1))){
             if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)){
                 return LIZARD;
+            } else {
+                return offensiveSearch(gameState);
             }
         }
 
@@ -315,7 +317,7 @@ public class Bot {
         //Cybertruck logic
         if (hasPowerUp(PowerUps.TWEET, myCar.powerups)) {
             //just place cybertruck infront of the opponent's face
-            actions.add(Pair.with(4, new TweetCommand(opponent.position.lane, opponent.position.block)));
+            actions.add(Pair.with(4, new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed)));
         }
 
         // EMP logic
