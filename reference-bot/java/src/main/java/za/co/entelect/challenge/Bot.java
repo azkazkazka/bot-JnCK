@@ -55,25 +55,25 @@ public class Bot {
 
         // initialize current, lower, and higher speed (edge case result: -1)
         int curSpeed = myCar.speed;
-        int lowerSpeed = getNearbySpeed(curSpeed, -1); 
+        int lowerSpeed = getNearbySpeed(curSpeed, -1);
         int higherSpeed = getNearbySpeed(curSpeed, +1);
-        
+
         // initialize possible lanes (current, left, right)
         List<Object> blocks = getBlocksInFront(curLane, curBlock, 1, gameState);
         List<Object> leftblocks = getBlocksInFront(curLane, curBlock, 2, gameState);
         List<Object> rightblocks = getBlocksInFront(curLane, curBlock, 0, gameState);
 
         // fix car (maintain max speed above 6)
-        if (damage >= 3){
+        if (damage >= 3) {
             return FIX;
         }
 
-        if (curSpeed == 0){
+        if (curSpeed == 0) {
             return ACCELERATE;
         }
 
-        if ((curSpeed == maxBoostSpeed) || ((curSpeed == maxSpeed))){
-            if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)){
+        if ((curSpeed == maxBoostSpeed) || ((curSpeed == maxSpeed))) {
+            if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
                 return LIZARD;
             } else {
                 return offensiveSearch(gameState);
@@ -83,83 +83,80 @@ public class Bot {
         // check total damage of each route
         int curdamage, leftdamage, rightdamage;
         curdamage = countTotalDamage(blocks, curSpeed + 1);
-        if (leftblocks.isEmpty()){
+        if (leftblocks.isEmpty()) {
             leftdamage = nullBlocks;
+        } else {
+            leftdamage = countTotalDamage(leftblocks, curSpeed);
+            ;
         }
-        else{
-            leftdamage = countTotalDamage(leftblocks, curSpeed);;
-        }
-        if (rightblocks.isEmpty()){
+        if (rightblocks.isEmpty()) {
             rightdamage = nullBlocks;
-        }
-        else{
+        } else {
             rightdamage = countTotalDamage(rightblocks, curSpeed);
         }
 
         // check total boost/lizard of each route
         int frontBoost, leftBoost, rightBoost;
         frontBoost = countBoostLizard(blocks, curSpeed + 1);
-        if (!leftblocks.isEmpty()){
+        if (!leftblocks.isEmpty()) {
             leftBoost = countBoostLizard(leftblocks, curSpeed);
-        } else{
+        } else {
             leftBoost = -1;
         }
-        if (!rightblocks.isEmpty()){
+        if (!rightblocks.isEmpty()) {
             rightBoost = countBoostLizard(rightblocks, curSpeed);
-        } else{
+        } else {
             rightBoost = -1;
         }
 
         // check ratio of boost over damage per lane
-        float frontWeight = frontBoost/curdamage;
-        float leftWeight = leftBoost/leftdamage;
-        float rightWeight = rightBoost/rightdamage;
+        float frontWeight = frontBoost / curdamage;
+        float leftWeight = leftBoost / leftdamage;
+        float rightWeight = rightBoost / rightdamage;
 
         // compare damage of each route
-        int[] check = {curdamage, leftdamage, rightdamage};
-        Arrays.sort(compare);
-        int lessdamage = compare[0];
+        int[] check = { curdamage, leftdamage, rightdamage };
+        Arrays.sort(check);
+        int lessdamage = check[0];
 
         // compare weight of each route
-        float[] compare = {frontWeight, leftWeight, rightWeight};
+        float[] compare = { frontWeight, leftWeight, rightWeight };
         Arrays.sort(compare);
         float bestRoute = compare[2];
 
         // check boost case
         int boostdamage = countTotalDamage(blocks, 16);
-            if (hasPowerUp(PowerUps.BOOST, myCar.powerups) && boostdamage <= 3){
-                return BOOST;
+        if (hasPowerUp(PowerUps.BOOST, myCar.powerups) && boostdamage <= 3) {
+            return BOOST;
         }
         // lane picking
-        if ((bestRoute == frontWeight && curdamage <= 3) || lessdamage == curdamage){
+        if ((bestRoute == frontWeight && curdamage <= 3) || lessdamage == curdamage) {
             // check accelerate
-            if (higherSpeed != -1){
+            if (higherSpeed != -1) {
                 int acclrtdamage = countTotalDamage(blocks, higherSpeed + 1);
-                if (acclrtdamage <= 3 || (acclrtdamage/curdamage) <= (higherSpeed/curSpeed)){
+                if (acclrtdamage <= 3 || (acclrtdamage / curdamage) <= (higherSpeed / curSpeed)) {
                     return ACCELERATE;
                 }
             }
             return offensiveSearch(gameState);
-        }
-        else{
+        } else {
             // check decelerate
-            if (lowerSpeed != -1 && lowerSpeed > 5){
+            if (lowerSpeed != -1 && lowerSpeed > 5) {
                 int dclrtdamage = countTotalDamage(blocks, lowerSpeed + 1);
-                if ((dclrtdamage == 0)){
+                if ((dclrtdamage == 0)) {
                     return DECELERATE;
                 }
             }
-            if ((bestRoute == leftWeight && leftdamage <= 3) || lessdamage == leftdamage){
+            if ((bestRoute == leftWeight && leftdamage <= 3) || lessdamage == leftdamage) {
                 return TURN_LEFT;
-            }
-            else{
+            } else {
                 return TURN_RIGHT;
             }
-        }            
+        }
     }
 
     private Boolean hasPowerUp(PowerUps powerUpToCheck, PowerUps[] available) {
-        for (PowerUps powerUp: available) {
+        for (PowerUps powerUp : available) {
             if (powerUp.equals(powerUpToCheck)) {
                 return true;
             }
@@ -170,7 +167,7 @@ public class Bot {
     private int countPowerUp(PowerUps powerUpToCheck, PowerUps[] available) {
         int count = 0;
 
-        for (PowerUps powerUp: available) {
+        for (PowerUps powerUp : available) {
             if (powerUp.equals(powerUpToCheck)) {
                 count++;
             }
@@ -185,14 +182,14 @@ public class Bot {
     private List<Object> getBlocksInFront(int lane, int block, int dir, GameState gameState) {
         List<Lane[]> map = gameState.lanes;
         List<Object> blocks = new ArrayList<>();
-        if ((dir == 2 && lane != 1) || dir == 1 || (dir == 0 && lane != 4)){
+        if ((dir == 2 && lane != 1) || dir == 1 || (dir == 0 && lane != 4)) {
             int startBlock = map.get(0)[0].position.block;
             Lane[] laneList = map.get(lane - dir);
             for (int i = max(block - startBlock, 0); i <= block - startBlock + Bot.visibility; i++) {
                 if (laneList[i] == null || laneList[i].terrain == Terrain.FINISH) {
                     break;
                 }
-                if (laneList[i].cybertruck){
+                if (laneList[i].cybertruck) {
                     blocks.add("CYBERTRUCK");
                 }
                 blocks.add(laneList[i].terrain);
@@ -202,27 +199,25 @@ public class Bot {
     }
 
     // get previous/next speed state
-    public int getNearbySpeed(int curSpeed, int dir){
-        if (curSpeed == 0 || curSpeed == 15){
+    public int getNearbySpeed(int curSpeed, int dir) {
+        if (curSpeed == 0 || curSpeed == 15) {
             return -1;
-        }
-        else{
+        } else {
             int curIdx = speedState.indexOf(curSpeed);
             return speedState.get(curIdx + dir);
         }
     }
 
     // count damage of each lanes
-    private int countTotalDamage(List<Object> blocks, int steps){
+    private int countTotalDamage(List<Object> blocks, int steps) {
         int count = 0;
-        if (blocks.size() < steps){
+        if (blocks.size() < steps) {
             steps = blocks.size();
         }
-        for (int i = 0; i < steps; i++){
-            if (blocks.get(i) == Terrain.MUD || blocks.get(i) == Terrain.OIL_SPILL){
+        for (int i = 0; i < steps; i++) {
+            if (blocks.get(i) == Terrain.MUD || blocks.get(i) == Terrain.OIL_SPILL) {
                 count += 1;
-            }
-            else if (blocks.get(i) == Terrain.WALL || blocks.get(i) == "CYBERTRUCK"){
+            } else if (blocks.get(i) == Terrain.WALL || blocks.get(i) == "CYBERTRUCK") {
                 count += 2;
             }
         }
@@ -230,61 +225,64 @@ public class Bot {
     }
 
     // count boost and lizard
-    private int countBoostLizard(List<Object> blocks, int speed){
+    private int countBoostLizard(List<Object> blocks, int speed) {
         int count = 0;
-        if (blocks.size() < speed){
+        if (blocks.size() < speed) {
             speed = blocks.size();
         }
-        for (int i = 0; i < speed; i++){
-            if (blocks.get(i) == Terrain.BOOST){
+        for (int i = 0; i < speed; i++) {
+            if (blocks.get(i) == Terrain.BOOST) {
                 count += 1;
-            } else if (blocks.get(i) == Terrain.LIZARD){
+            } else if (blocks.get(i) == Terrain.LIZARD) {
                 count += 1;
             }
         }
         return count + 1;
     }
 
-    private Command offensiveSearch(GameState gameState){
+    private Command offensiveSearch(GameState gameState) {
         Car myCar = gameState.player;
         Car opponent = gameState.opponent;
-        //create array with tuples as pair
-        //tuples contain weight of the command and the command itself
-        //used for prioritizing some move
+        // create array with tuples as pair
+        // tuples contain weight of the command and the command itself
+        // used for prioritizing some move
         ArrayList<Pair<Integer, Command>> actions = new ArrayList<Pair<Integer, Command>>();
 
-        //comparator for weight
-        Comparator<Pair<Integer, Command>> comparePair = (Pair<Integer, Command> p1, Pair<Integer, Command> p2) 
-            -> p1.getValue0().compareTo(p2.getValue0());
+        // comparator for weight
+        Comparator<Pair<Integer, Command>> comparePair = (Pair<Integer, Command> p1, Pair<Integer, Command> p2) -> p1
+                .getValue0().compareTo(p2.getValue0());
 
         // oil logic
         if (hasPowerUp(PowerUps.OIL, myCar.powerups)) {
             // too many oil, just drop
-            if (countPowerUp(PowerUps.OIL, myCar.powerups) > 3){
+            if (countPowerUp(PowerUps.OIL, myCar.powerups) > 3) {
                 actions.add(Pair.with(10, OIL));
             }
             // drop oil to opponent behind
             if (opponent.position.lane == myCar.position.lane) {
-                if (opponent.position.block == myCar.position.block - 1){
+                if (opponent.position.block == myCar.position.block - 1) {
                     actions.add(Pair.with(1, OIL));
-                }else if (1 <= (myCar.position.block - opponent.position.block) && (myCar.position.block - opponent.position.block) <= 15){
+                } else if (1 <= (myCar.position.block - opponent.position.block)
+                        && (myCar.position.block - opponent.position.block) <= 15) {
                     actions.add(Pair.with(3, OIL));
                 }
-            // there should be more logic to this
+                // there should be more logic to this
             }
         }
 
-        //Cybertruck logic
+        // Cybertruck logic
         if (hasPowerUp(PowerUps.TWEET, myCar.powerups)) {
-            //just place cybertruck infront of the opponent's face
-            actions.add(Pair.with(4, new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
+            // just place cybertruck infront of the opponent's face
+            actions.add(Pair.with(4,
+                    new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
         }
 
         // EMP logic
-        if (hasPowerUp((PowerUps.EMP), myCar.powerups) && myCar.position.block > opponent.position.block){
-            if (Math.abs(myCar.position.lane - opponent.position.lane) <= 1){
-                // this basically, if we are ahead of the opponent and not in the same lane as them
-                if (myCar.position.lane != opponent.position.lane){
+        if (hasPowerUp((PowerUps.EMP), myCar.powerups) && myCar.position.block > opponent.position.block) {
+            if (Math.abs(myCar.position.lane - opponent.position.lane) <= 1) {
+                // this basically, if we are ahead of the opponent and not in the same lane as
+                // them
+                if (myCar.position.lane != opponent.position.lane) {
                     actions.add(Pair.with(0, EMP));
                 }
             }
@@ -292,7 +290,7 @@ public class Bot {
 
         // sort depends on the weight of command
         Collections.sort(actions, comparePair);
-        if (actions.size() > 0){
+        if (actions.size() > 0) {
             // take the priority(min) command
             return actions.get(0).getValue1();
         } else {
@@ -300,4 +298,3 @@ public class Bot {
         }
     }
 }
-
