@@ -63,6 +63,9 @@ public class Bot {
         List<Object> leftblocks = getBlocksInFront(curLane, curBlock, 2, gameState);
         List<Object> rightblocks = getBlocksInFront(curLane, curBlock, 0, gameState);
 
+        // offensive command
+        Command offCommand = offensiveSearch(gameState);
+
         // fix car (maintain max speed above 6)
         if (damage >= 3) {
             return FIX;
@@ -76,7 +79,9 @@ public class Bot {
             if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
                 return LIZARD;
             } else {
-                return offensiveSearch(gameState);
+                if (offCommand != NOTHING) {
+                    return offCommand;
+                }
             }
         }
 
@@ -138,7 +143,7 @@ public class Bot {
                     return ACCELERATE;
                 }
             }
-            return offensiveSearch(gameState);
+            return offCommand;
         } else {
             // check decelerate
             if (lowerSpeed != -1 && lowerSpeed > 5) {
@@ -272,9 +277,54 @@ public class Bot {
 
         // Cybertruck logic
         if (hasPowerUp(PowerUps.TWEET, myCar.powerups)) {
-            // just place cybertruck infront of the opponent's face
-            actions.add(Pair.with(4,
-                    new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
+            // can predict opponent movement, if we are ahead
+            if (myCar.position.block > opponent.position.block) {
+                // initialize for checking every lane damage
+                int curLane = opponent.position.lane;
+                int curBlock = opponent.position.block;
+                int curSpeed = opponent.speed;
+
+                List<Object> blocks = getBlocksInFront(curLane, curBlock, 1, gameState);
+                List<Object> leftBlocks = getBlocksInFront(curLane, curBlock, 2, gameState);
+                List<Object> rightBlocks = getBlocksInFront(curLane, curBlock, 0, gameState);
+
+                // calculating every damage in every lane
+                int curDamage, leftDamage, rightDamage;
+                curDamage = countTotalDamage(blocks, curSpeed + 1);
+                if (leftBlocks.isEmpty()) {
+                    leftDamage = nullBlocks;
+                } else {
+                    leftDamage = countTotalDamage(leftBlocks, curSpeed);
+                    ;
+                }
+                if (rightBlocks.isEmpty()) {
+                    rightDamage = nullBlocks;
+                } else {
+                    rightDamage = countTotalDamage(rightBlocks, curSpeed);
+                }
+
+                // finding the best route for opponent, so we can attack with cybertruck
+                int[] check = { curDamage, leftDamage, rightDamage };
+                Arrays.sort(check);
+                int bestRoute = check[0];
+
+                // place cybertruck in opponent's best lane
+                if (bestRoute == curDamage) {
+                    actions.add(Pair.with(4,
+                            new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
+                } else if (bestRoute == leftDamage) {
+                    actions.add(Pair.with(4,
+                            new TweetCommand(opponent.position.lane - 1, opponent.position.block + opponent.speed)));
+                } else {
+                    actions.add(Pair.with(4,
+                            new TweetCommand(opponent.position.lane + 1, opponent.position.block + opponent.speed)));
+                }
+            } else {
+                // just place cybertruck infront of the opponent's face, if we are behind
+                // #GREEDY
+                actions.add(Pair.with(4,
+                        new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
+            }
         }
 
         // EMP logic
