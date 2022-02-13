@@ -305,13 +305,21 @@ public class Bot {
             if (opponent.position.lane == myCar.position.lane) {
                 if (opponent.position.block == myCar.position.block - 1){
                     actions.add(Pair.with(1, OIL));
+                }else if (1 <= (myCar.position.block - opponent.position.block) && (myCar.position.block - opponent.position.block) <= 15){
+                    actions.add(Pair.with(3, OIL));
                 }
             // there should be more logic to this
             }
         }
 
         //Cybertruck logic
-        //bit hard to implement
+        if (hasPowerUp(PowerUps.TWEET, myCar.powerups)) {
+            //check if we are ahead
+            if (myCar.position.block > opponent.position.block){
+                //just place cybertruck infront of the opponent's face
+                actions.add(Pair.with(4, new TweetCommand(opponent.position.lane, opponent.position.block)));
+            }
+        }
 
         // EMP logic
         if (hasPowerUp((PowerUps.EMP), myCar.powerups) && myCar.position.block > opponent.position.block){
