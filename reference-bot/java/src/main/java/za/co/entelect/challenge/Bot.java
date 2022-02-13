@@ -72,7 +72,7 @@ public class Bot {
             return ACCELERATE;
         }
 
-        if ((curSpeed == maxBoostSpeed) || ((curSpeed == maxSpeed) && (damage == 1))){
+        if ((curSpeed == maxBoostSpeed) || ((curSpeed == maxSpeed))){
             if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)){
                 return LIZARD;
             } else {
@@ -82,7 +82,6 @@ public class Bot {
 
         // check total damage of each route
         int curdamage, leftdamage, rightdamage;
-
         curdamage = countTotalDamage(blocks, curSpeed + 1);
         if (leftblocks.isEmpty()){
             leftdamage = nullBlocks;
@@ -100,102 +99,63 @@ public class Bot {
         // check total boost/lizard of each route
         int frontBoost, leftBoost, rightBoost;
         frontBoost = countBoostLizard(blocks, curSpeed + 1);
-
         if (!leftblocks.isEmpty()){
             leftBoost = countBoostLizard(leftblocks, curSpeed);
         } else{
             leftBoost = -1;
         }
-        
         if (!rightblocks.isEmpty()){
             rightBoost = countBoostLizard(rightblocks, curSpeed);
         } else{
             rightBoost = -1;
         }
 
-        if ((frontBoost <= 1) && (rightBoost <= 1) && (leftBoost <= 1)){
-            // compare damage of each route
-            int[] check = {curdamage, leftdamage, rightdamage};
-            Arrays.sort(check);
-            int bestRoute = check[0];
-
-            // compare with accelerate & decelerate case (BAGIAN INI BLM DIPIKIRIN BET TP YAUDALAYA)
-            if (bestRoute == curdamage){
-                // check accelerate
-                if (higherSpeed != -1){
-                    int acclrtdamage = countTotalDamage(blocks, higherSpeed + 1);
-                    if (acclrtdamage <= 3 || (acclrtdamage/curdamage) <= (higherSpeed/curSpeed)){
-                        if (hasPowerUp(PowerUps.BOOST, myCar.powerups)){
-                            return BOOST;
-                        } else {
-                            return ACCELERATE;
-                        }
-                    }
-                }
-                return offensiveSearch(gameState);
-            }
-            else{
-                // check decelerate
-                if (lowerSpeed != -1 && lowerSpeed >= 5){
-                    int dclrtdamage = countTotalDamage(blocks, lowerSpeed + 1);
-                    if ((dclrtdamage <= 2 || dclrtdamage <= bestRoute + 1)){
-                        return DECELERATE;
-                    }
-                }
-                if (bestRoute == leftdamage){
-                    return TURN_LEFT;
-                }
-                else{
-                    return TURN_RIGHT;
-                }
-            }            
-        }
-
-        // compare boost/damage of each route
+        // check ratio of boost over damage per lane
         float frontWeight = frontBoost/curdamage;
         float leftWeight = leftBoost/leftdamage;
         float rightWeight = rightBoost/rightdamage;
+
+        // compare damage of each route
+        int[] check = {curdamage, leftdamage, rightdamage};
+        Arrays.sort(compare);
+        int lessdamage = compare[0];
+
+        // compare weight of each route
         float[] compare = {frontWeight, leftWeight, rightWeight};
         Arrays.sort(compare);
         float bestRoute = compare[2];
 
-        // compare with accelerate & decelerate case (BAGIAN INI BLM DIPIKIRIN BET TP YAUDALAYA)
-        // TINJAU ULANG
-        if (bestRoute == frontWeight && curdamage < 5){
+        // check boost case
+        int boostdamage = countTotalDamage(blocks, 16);
+            if (hasPowerUp(PowerUps.BOOST, myCar.powerups) && boostdamage <= 3){
+                return BOOST;
+        }
+        // lane picking
+        if ((bestRoute == frontWeight && curdamage <= 3) || lessdamage == curdamage){
             // check accelerate
             if (higherSpeed != -1){
                 int acclrtdamage = countTotalDamage(blocks, higherSpeed + 1);
                 if (acclrtdamage <= 3 || (acclrtdamage/curdamage) <= (higherSpeed/curSpeed)){
-                    if (hasPowerUp(PowerUps.BOOST, myCar.powerups)){
-                        return BOOST;
-                    } else {
-                        return ACCELERATE;
-                    }
+                    return ACCELERATE;
                 }
             }
             return offensiveSearch(gameState);
         }
         else{
             // check decelerate
-            if (lowerSpeed != -1 && lowerSpeed >= 5){
+            if (lowerSpeed != -1 && lowerSpeed > 5){
                 int dclrtdamage = countTotalDamage(blocks, lowerSpeed + 1);
-                if ((dclrtdamage <= 2 || dclrtdamage <= bestRoute + 1)){
+                if ((dclrtdamage == 0)){
                     return DECELERATE;
                 }
             }
-
-            // TINJAU ULANG
-            if (bestRoute == leftWeight && leftdamage < 5){
+            if ((bestRoute == leftWeight && leftdamage <= 3) || lessdamage == leftdamage){
                 return TURN_LEFT;
             }
-            else if (bestRoute == rightWeight && rightdamage < 5){
+            else{
                 return TURN_RIGHT;
             }
-            else {
-                return NOTHING;
-            }
-            
-        }
+        }            
     }
 
     private Boolean hasPowerUp(PowerUps powerUpToCheck, PowerUps[] available) {
