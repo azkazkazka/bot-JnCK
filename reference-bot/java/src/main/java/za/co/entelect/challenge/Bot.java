@@ -314,11 +314,8 @@ public class Bot {
 
         //Cybertruck logic
         if (hasPowerUp(PowerUps.TWEET, myCar.powerups)) {
-            //check if we are ahead
-            if (myCar.position.block > opponent.position.block){
-                //just place cybertruck infront of the opponent's face
-                actions.add(Pair.with(4, new TweetCommand(opponent.position.lane, opponent.position.block)));
-            }
+            //just place cybertruck infront of the opponent's face
+            actions.add(Pair.with(4, new TweetCommand(opponent.position.lane, opponent.position.block)));
         }
 
         // EMP logic
