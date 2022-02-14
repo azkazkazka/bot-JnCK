@@ -67,22 +67,12 @@ public class Bot {
         Command offCommand = offensiveSearch(gameState);
 
         // fix car (maintain max speed above 6)
-        if (damage >= 3) {
+        if (damage >= 2) {
             return FIX;
         }
 
         if (curSpeed == 0) {
             return ACCELERATE;
-        }
-
-        if ((curSpeed == maxBoostSpeed) || ((curSpeed == maxSpeed))) {
-            if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
-                return LIZARD;
-            } else {
-                if (offCommand != NOTHING) {
-                    return offCommand;
-                }
-            }
         }
 
         // check total damage of each route
@@ -131,9 +121,20 @@ public class Bot {
 
         // check boost case
         int boostdamage = countTotalDamage(blocks, 16);
-        if (hasPowerUp(PowerUps.BOOST, myCar.powerups) && boostdamage <= 3) {
+        if (hasPowerUp(PowerUps.BOOST, myCar.powerups) && boostdamage <= 2 && curSpeed != maxBoostSpeed) {
             return BOOST;
         }
+
+        if ((curSpeed >= 8) && curdamage != 0) {
+            if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
+                return LIZARD;
+            } else {
+                if (offCommand != NOTHING) {
+                    return offCommand;
+                }
+            }
+        }
+
         // lane picking
         if ((bestRoute == frontWeight && curdamage <= 3) || lessdamage == curdamage) {
             // check accelerate
