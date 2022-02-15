@@ -6,12 +6,8 @@ import za.co.entelect.challenge.enums.PowerUps;
 import za.co.entelect.challenge.enums.Terrain;
 
 import java.util.*;
-
 import org.javatuples.Pair;
-
 import static java.lang.Math.max;
-
-// import java.rmi.activation.Activator;
 import java.security.SecureRandom;
 
 public class Bot {
@@ -206,7 +202,7 @@ public class Bot {
 
     // get previous/next speed state
     public int getNearbySpeed(int curSpeed, int dir) {
-        if (curSpeed == 0 || curSpeed == 15) {
+        if ((curSpeed == 0 && dir == -1) || (curSpeed == 15 && dir == 1)) {
             return -1;
         } else {
             int curIdx = speedState.indexOf(curSpeed);
@@ -311,8 +307,21 @@ public class Bot {
 
                 // place cybertruck in opponent's best lane
                 if (bestRoute == curDamage) {
-                    actions.add(Pair.with(4,
-                            new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
+                    // opponent might accelerate/boost so add with the next speed state
+                    int oppNextSpeed = getNearbySpeed(opponent.speed, 1);
+                    if (oppNextSpeed != -1){
+                        if (opponent.boostCounter >= 1){
+                            // opponent most likely use boost here
+                            actions.add(Pair.with(4,
+                                    new TweetCommand(opponent.position.lane, opponent.position.block + maxBoostSpeed + 1)));
+                        } else {
+                            actions.add(Pair.with(4,
+                                    new TweetCommand(opponent.position.lane, opponent.position.block + oppNextSpeed + 1)));
+                        }
+                    } else {
+                        actions.add(Pair.with(4,
+                            new TweetCommand(opponent.position.lane - 1, opponent.position.block + opponent.speed)));
+                    }
                 } else if (bestRoute == leftDamage) {
                     actions.add(Pair.with(4,
                             new TweetCommand(opponent.position.lane - 1, opponent.position.block + opponent.speed)));
@@ -320,22 +329,29 @@ public class Bot {
                     actions.add(Pair.with(4,
                             new TweetCommand(opponent.position.lane + 1, opponent.position.block + opponent.speed)));
                 }
-            } else {
-                // just place cybertruck infront of the opponent's face, if we are behind
-                // #GREEDY
-                actions.add(Pair.with(4,
-                        new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
-            }
+            } 
+            // TEMPORARILY TURNED OFF, because its too risky to use cybertruck when we are behind
+            // else {
+            //     // just place cybertruck infront of the opponent's face, if we are behind
+            //     // #GREEDY
+            //     actions.add(Pair.with(4,
+            //             new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
+            // }
         }
 
         // EMP logic
-        if (hasPowerUp((PowerUps.EMP), myCar.powerups) && myCar.position.block > opponent.position.block) {
+        // check if opponent is ahead then we can use EMP
+        if (hasPowerUp((PowerUps.EMP), myCar.powerups) && myCar.position.block < opponent.position.block) {
             if (Math.abs(myCar.position.lane - opponent.position.lane) <= 1) {
-                // this basically, if we are ahead of the opponent and not in the same lane as
-                // them
-                if (myCar.position.lane != opponent.position.lane) {
-                    actions.add(Pair.with(0, EMP));
-                }
+                // TEMPORARILY TURNED OFF
+                // if we are behind of the opponent and not in the same lane as them
+                // so that it wont affect us negatively
+                // if (myCar.position.lane != opponent.position.lane) {
+                //     actions.add(Pair.with(0, EMP));
+                // }
+                // CURENTLY, just check if we are behind and the opponent is in the scope of EMP range
+                // #GREEDY
+                actions.add(Pair.with(0, EMP));
             }
         }
 
