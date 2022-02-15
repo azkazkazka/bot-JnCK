@@ -52,7 +52,7 @@ public class Bot {
         // initialize current, lower, and higher speed (edge case result: -1)
         int curSpeed = myCar.speed;
         int lowerSpeed = getNearbySpeed(curSpeed, -1);
-        int higherSpeed = getNearbySpeed(curSpeed, +1);
+        int higherSpeed = getNearbySpeed(curSpeed, 1);
 
         // initialize possible lanes (current, left, right)
         List<Object> blocks = getBlocksInFront(curLane, curBlock, 1, gameState);
@@ -71,21 +71,6 @@ public class Bot {
             return ACCELERATE;
         }
 
-        // check total damage of each route
-        int curdamage, leftdamage, rightdamage;
-        curdamage = countTotalDamage(blocks, curSpeed + 1);
-        if (leftblocks.isEmpty()) {
-            leftdamage = nullBlocks;
-        } else {
-            leftdamage = countTotalDamage(leftblocks, curSpeed);
-            ;
-        }
-        if (rightblocks.isEmpty()) {
-            rightdamage = nullBlocks;
-        } else {
-            rightdamage = countTotalDamage(rightblocks, curSpeed);
-        }
-
         // check total boost/lizard of each route
         int frontBoost, leftBoost, rightBoost;
         frontBoost = countBoostLizard(blocks, curSpeed + 1);
@@ -100,10 +85,39 @@ public class Bot {
             rightBoost = -1;
         }
 
-        // check ratio of boost over damage per lane
-        float frontWeight = frontBoost / curdamage;
-        float leftWeight = leftBoost / leftdamage;
-        float rightWeight = rightBoost / rightdamage;
+        // check total damage of each route
+        int curdamage, leftdamage, rightdamage;
+        curdamage = countTotalDamage(blocks, curSpeed + 1);
+        if (leftblocks.isEmpty()) {
+            leftdamage = nullBlocks;
+        } else {
+            leftdamage = countTotalDamage(leftblocks, curSpeed);
+        }
+        if (rightblocks.isEmpty()) {
+            rightdamage = nullBlocks;
+        } else {
+            rightdamage = countTotalDamage(rightblocks, curSpeed);
+        }
+
+        double frontWeight, leftWeight, rightWeight;
+        if (curdamage == 0){
+            frontWeight = frontBoost / 0.1;
+        }
+        else{
+            frontWeight = frontBoost / curdamage;
+        }
+        if (leftdamage == 0 || leftdamage == nullBlocks){
+            leftWeight = leftBoost / 0.1;
+        }
+        else{
+            leftWeight = leftBoost / leftdamage;
+        }
+        if (rightdamage == 0 || rightdamage == nullBlocks){
+            rightWeight = rightBoost / 0.1;
+        }
+        else{
+            rightWeight = rightBoost / rightdamage;
+        }
 
         // compare damage of each route
         int[] check = { curdamage, leftdamage, rightdamage };
@@ -111,9 +125,9 @@ public class Bot {
         int lessdamage = check[0];
 
         // compare weight of each route
-        float[] compare = { frontWeight, leftWeight, rightWeight };
+        double[] compare = { frontWeight, leftWeight, rightWeight };
         Arrays.sort(compare);
-        float bestRoute = compare[2];
+        double bestRoute = compare[2];
 
         // check boost case
         int boostdamage = countTotalDamage(blocks, 16);
@@ -121,14 +135,16 @@ public class Bot {
             return BOOST;
         }
 
-        if ((curSpeed >= 8) && curdamage != 0) {
+        if (curdamage == 0 && curSpeed > 3){
+            if (offCommand != NOTHING) {
+                return offCommand;
+            }
+        }
+
+        if ((curSpeed == maxBoostSpeed && curdamage != 0) || (curSpeed >= 8 && curdamage != 0 && leftdamage != 0 && rightdamage != 0)) {
             if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
                 return LIZARD;
-            } else {
-                if (offCommand != NOTHING) {
-                    return offCommand;
-                }
-            }
+            } 
         }
 
         // lane picking
@@ -136,7 +152,7 @@ public class Bot {
             // check accelerate
             if (higherSpeed != -1) {
                 int acclrtdamage = countTotalDamage(blocks, higherSpeed + 1);
-                if (acclrtdamage <= 3 || (acclrtdamage / curdamage) <= (higherSpeed / curSpeed)) {
+                if (acclrtdamage <= 3) {
                     return ACCELERATE;
                 }
             }
@@ -149,10 +165,13 @@ public class Bot {
                     return DECELERATE;
                 }
             }
-            if ((bestRoute == leftWeight && leftdamage <= 3) || lessdamage == leftdamage) {
+            if (!(leftblocks.isEmpty()) && ((bestRoute == leftWeight && leftdamage <= 3) || lessdamage == leftdamage)) {
                 return TURN_LEFT;
-            } else {
+            } else if (!(rightblocks.isEmpty()) && ((bestRoute == rightWeight && rightdamage <= 3) || lessdamage == rightdamage)){
                 return TURN_RIGHT;
+            }
+            else {
+                return offCommand;
             }
         }
     }
@@ -194,7 +213,9 @@ public class Bot {
                 if (laneList[i].cybertruck) {
                     blocks.add("CYBERTRUCK");
                 }
-                blocks.add(laneList[i].terrain);
+                else{
+                    blocks.add(laneList[i].terrain);
+                }
             }
         }
         return blocks;
@@ -223,7 +244,7 @@ public class Bot {
                 count += 2;
             }
         }
-        return count + 1;
+        return count;
     }
 
     // count boost and lizard
