@@ -391,13 +391,19 @@ public class Bot {
                                     new TweetCommand(opponent.position.lane,
                                             opponent.position.block + maxBoostSpeed + 1)));
                         } else {
-                            actions.add(Pair.with(4,
-                                    new TweetCommand(opponent.position.lane,
-                                            opponent.position.block + oppNextSpeed + 1)));
+                            if (oppNextSpeed == 9){ 
+                                actions.add(Pair.with(4,
+                                new TweetCommand(opponent.position.lane,
+                                        opponent.position.block + opponent.speed)));
+                            } else {
+                                actions.add(Pair.with(4,
+                                        new TweetCommand(opponent.position.lane,
+                                                opponent.position.block + oppNextSpeed + 1)));
+                            }
                         }
                     } else {
                         actions.add(Pair.with(4,
-                                new TweetCommand(opponent.position.lane - 1,
+                                new TweetCommand(opponent.position.lane,
                                         opponent.position.block + opponent.speed)));
                     }
                 } else if (bestRoute == leftDamage) {
