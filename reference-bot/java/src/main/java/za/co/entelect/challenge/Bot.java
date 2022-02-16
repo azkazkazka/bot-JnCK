@@ -57,7 +57,7 @@ public class Bot {
         Command offCommand = offensiveSearch(gameState);
 
         // fix car (maintain max speed above 6)
-        if (blocks.size() <= higherSpeed){
+        if ((curBlock + higherSpeed >= 1499)) {
             return ACCELERATE;
         }
 
@@ -71,47 +71,66 @@ public class Bot {
 
         // check total power ups of each route
         int frontPowerUps, leftPowerUps, rightPowerUps;
+        int visfrontPowerUps, visleftPowerUps, visrightPowerUps;
         frontPowerUps = countPowerUps(blocks, curSpeed + 1);
+        visfrontPowerUps = countPowerUps(blocks, visibility);
         if (!leftblocks.isEmpty()) {
             leftPowerUps = countPowerUps(leftblocks, curSpeed);
+            visleftPowerUps = countPowerUps(leftblocks, visibility);
         } else {
             leftPowerUps = -1;
+            visleftPowerUps = -1;
         }
         if (!rightblocks.isEmpty()) {
             rightPowerUps = countPowerUps(rightblocks, curSpeed);
+            visrightPowerUps = countPowerUps(rightblocks, visibility);
         } else {
             rightPowerUps = -1;
+            visrightPowerUps = -1;
         }
 
         // check total damage of each route
         int curdamage, leftdamage, rightdamage;
+        int visfrontdamage, visleftdamage, visrightdamage;
         curdamage = countTotalDamage(blocks, curSpeed + 1);
+        visfrontdamage = countTotalDamage(blocks, visibility);
         if (leftblocks.isEmpty()) {
             leftdamage = nullBlocks;
+            visleftdamage = nullBlocks;
         } else {
             leftdamage = countTotalDamage(leftblocks, curSpeed);
+            visleftdamage = countTotalDamage(leftblocks, visibility);
         }
         if (rightblocks.isEmpty()) {
             rightdamage = nullBlocks;
+            visrightdamage = nullBlocks;
         } else {
             rightdamage = countTotalDamage(rightblocks, curSpeed);
+            visrightdamage = countTotalDamage(rightblocks, visibility);
         }
 
         double frontWeight, leftWeight, rightWeight;
+        double visfrontWeight, visleftWeight, visrightWeight;
         if (curdamage == 0) {
             frontWeight = frontPowerUps / 0.1;
+            visfrontWeight = visfrontPowerUps / 0.1;
         } else {
             frontWeight = frontPowerUps / curdamage;
+            visfrontWeight = visfrontPowerUps / visfrontdamage;
         }
         if (leftdamage == 0 || leftdamage == nullBlocks) {
             leftWeight = leftPowerUps / 0.1;
+            visleftWeight = visleftPowerUps / 0.1;
         } else {
             leftWeight = leftPowerUps / leftdamage;
+            visleftWeight = visleftPowerUps / visleftdamage;
         }
         if (rightdamage == 0 || rightdamage == nullBlocks) {
             rightWeight = rightPowerUps / 0.1;
+            visrightWeight = visrightPowerUps / 0.1;
         } else {
             rightWeight = rightPowerUps / rightdamage;
+            visrightWeight = visrightPowerUps / visrightdamage;
         }
 
         // compare damage of each route
@@ -119,12 +138,20 @@ public class Bot {
         Arrays.sort(check);
         int lessdamage = check[0];
 
+        // compare damage of vis route
+        // int vischeck = {visfrontDa}
+
         // compare weight of each route
         double[] compare = { frontWeight, leftWeight, rightWeight };
         Arrays.sort(compare);
         double bestRoute = compare[2];
 
+        double[] viscompare = { visfrontWeight, visleftWeight, visrightWeight };
+        Arrays.sort(viscompare);
+        double visBestRoute = viscompare[2];
+
         // check boost case
+
         int boostdamage = countTotalDamage(blocks, 16);
         if (hasPowerUp(PowerUps.BOOST, myCar.powerups) && boostdamage <= 2 && curSpeed != maxBoostSpeed) {
             return BOOST;
@@ -136,14 +163,42 @@ public class Bot {
             }
         }
 
-        if ((curSpeed == maxBoostSpeed && curdamage != 0) || 
-            (curSpeed >= 8 && curdamage != 0 && leftdamage != 0 && rightdamage != 0)) {
+        if ((curSpeed == maxBoostSpeed && curdamage != 0) ||
+                (curSpeed >= 8 && curdamage != 0 && leftdamage != 0 && rightdamage != 0)) {
             if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
                 return LIZARD;
             }
         }
 
         // lane picking
+        if ((bestRoute == frontWeight) && (bestRoute == leftWeight) && (bestRoute == rightWeight)) {
+            if (visBestRoute == visfrontWeight) {
+                bestRoute = frontWeight;
+            } else if (visBestRoute == visleftWeight) {
+                bestRoute = leftWeight;
+            } else if (visBestRoute == visrightWeight) {
+                bestRoute = rightWeight;
+            }
+        } else if ((bestRoute == frontWeight) && (bestRoute == leftWeight)) {
+            if (visBestRoute == visfrontWeight) {
+                bestRoute = frontWeight;
+            } else if (visBestRoute == visleftWeight) {
+                bestRoute = leftWeight;
+            }
+        } else if ((bestRoute == leftWeight) && (bestRoute == rightWeight)) {
+            if (visBestRoute == visleftWeight) {
+                bestRoute = leftWeight;
+            } else if (visBestRoute == visrightWeight) {
+                bestRoute = rightWeight;
+            }
+        } else if ((bestRoute == frontWeight) && (bestRoute == rightWeight)) {
+            if (visBestRoute == visfrontWeight) {
+                bestRoute = frontWeight;
+            } else if (visBestRoute == visrightWeight) {
+                bestRoute = rightWeight;
+            }
+        }
+
         if ((bestRoute == frontWeight && curdamage <= 3) || lessdamage == curdamage) {
             // check accelerate
             if (higherSpeed != -1) {
@@ -289,7 +344,6 @@ public class Bot {
                         && (myCar.position.block - opponent.position.block) <= 15) {
                     actions.add(Pair.with(3, OIL));
                 }
-                // there should be more logic to this
             }
         }
 
