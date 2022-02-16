@@ -8,17 +8,13 @@ import za.co.entelect.challenge.enums.Terrain;
 import java.util.*;
 import org.javatuples.Pair;
 import static java.lang.Math.max;
-import java.security.SecureRandom;
 
 public class Bot {
 
-    private static final int maxSpeed = 9;
     private static final int visibility = 20;
     private static final int nullBlocks = 999;
     private static final int maxBoostSpeed = 15;
     private List<Command> directionList = new ArrayList<>();
-
-    private final Random random;
 
     private final static Command OIL = new OilCommand();
     private final static Command EMP = new EmpCommand();
@@ -35,14 +31,12 @@ public class Bot {
     private List<Integer> speedState = new ArrayList<Integer>(Arrays.asList(0, 3, 5, 6, 8, 9, 15));
 
     public Bot() {
-        this.random = new SecureRandom();
         directionList.add(TURN_LEFT);
         directionList.add(TURN_RIGHT);
     }
 
     public Command run(GameState gameState) {
         Car myCar = gameState.player;
-        Car opponent = gameState.opponent;
 
         // initialize car & game state
         int damage = myCar.damage;
@@ -63,6 +57,10 @@ public class Bot {
         Command offCommand = offensiveSearch(gameState);
 
         // fix car (maintain max speed above 6)
+        if (blocks.size() <= higherSpeed){
+            return ACCELERATE;
+        }
+
         if (damage >= 2) {
             return FIX;
         }
@@ -71,18 +69,18 @@ public class Bot {
             return ACCELERATE;
         }
 
-        // check total boost/lizard of each route
-        int frontBoost, leftBoost, rightBoost;
-        frontBoost = countBoostLizard(blocks, curSpeed + 1);
+        // check total power ups of each route
+        int frontPowerUps, leftPowerUps, rightPowerUps;
+        frontPowerUps = countPowerUps(blocks, curSpeed + 1);
         if (!leftblocks.isEmpty()) {
-            leftBoost = countBoostLizard(leftblocks, curSpeed);
+            leftPowerUps = countPowerUps(leftblocks, curSpeed);
         } else {
-            leftBoost = -1;
+            leftPowerUps = -1;
         }
         if (!rightblocks.isEmpty()) {
-            rightBoost = countBoostLizard(rightblocks, curSpeed);
+            rightPowerUps = countPowerUps(rightblocks, curSpeed);
         } else {
-            rightBoost = -1;
+            rightPowerUps = -1;
         }
 
         // check total damage of each route
@@ -100,23 +98,20 @@ public class Bot {
         }
 
         double frontWeight, leftWeight, rightWeight;
-        if (curdamage == 0){
-            frontWeight = frontBoost / 0.1;
+        if (curdamage == 0) {
+            frontWeight = frontPowerUps / 0.1;
+        } else {
+            frontWeight = frontPowerUps / curdamage;
         }
-        else{
-            frontWeight = frontBoost / curdamage;
+        if (leftdamage == 0 || leftdamage == nullBlocks) {
+            leftWeight = leftPowerUps / 0.1;
+        } else {
+            leftWeight = leftPowerUps / leftdamage;
         }
-        if (leftdamage == 0 || leftdamage == nullBlocks){
-            leftWeight = leftBoost / 0.1;
-        }
-        else{
-            leftWeight = leftBoost / leftdamage;
-        }
-        if (rightdamage == 0 || rightdamage == nullBlocks){
-            rightWeight = rightBoost / 0.1;
-        }
-        else{
-            rightWeight = rightBoost / rightdamage;
+        if (rightdamage == 0 || rightdamage == nullBlocks) {
+            rightWeight = rightPowerUps / 0.1;
+        } else {
+            rightWeight = rightPowerUps / rightdamage;
         }
 
         // compare damage of each route
@@ -135,16 +130,17 @@ public class Bot {
             return BOOST;
         }
 
-        if (curdamage == 0 && curSpeed > 3){
+        if (curdamage == 0 && curSpeed > 3) {
             if (offCommand != NOTHING) {
                 return offCommand;
             }
         }
 
-        if ((curSpeed == maxBoostSpeed && curdamage != 0) || (curSpeed >= 8 && curdamage != 0 && leftdamage != 0 && rightdamage != 0)) {
+        if ((curSpeed == maxBoostSpeed && curdamage != 0) || 
+            (curSpeed >= 8 && curdamage != 0 && leftdamage != 0 && rightdamage != 0)) {
             if (hasPowerUp(PowerUps.LIZARD, myCar.powerups)) {
                 return LIZARD;
-            } 
+            }
         }
 
         // lane picking
@@ -152,14 +148,20 @@ public class Bot {
             // check accelerate
             if (higherSpeed != -1) {
                 int acclrtdamage = countTotalDamage(blocks, higherSpeed + 1);
-                if (acclrtdamage <= 3) {
+                if (acclrtdamage <= 3 && curSpeed < 9) {
                     return ACCELERATE;
                 }
             }
             return offCommand;
         } else {
             // check decelerate
-            if (lowerSpeed != -1 && lowerSpeed > 5) {
+            int checkdamage;
+            if (bestRoute == leftWeight) {
+                checkdamage = leftdamage;
+            } else {
+                checkdamage = rightdamage;
+            }
+            if (lowerSpeed != -1 && lowerSpeed > 5 && (checkdamage >= 2 || lessdamage >= 2)) {
                 int dclrtdamage = countTotalDamage(blocks, lowerSpeed + 1);
                 if ((dclrtdamage == 0)) {
                     return DECELERATE;
@@ -167,10 +169,10 @@ public class Bot {
             }
             if (!(leftblocks.isEmpty()) && ((bestRoute == leftWeight && leftdamage <= 3) || lessdamage == leftdamage)) {
                 return TURN_LEFT;
-            } else if (!(rightblocks.isEmpty()) && ((bestRoute == rightWeight && rightdamage <= 3) || lessdamage == rightdamage)){
+            } else if (!(rightblocks.isEmpty())
+                    && ((bestRoute == rightWeight && rightdamage <= 3) || lessdamage == rightdamage)) {
                 return TURN_RIGHT;
-            }
-            else {
+            } else {
                 return offCommand;
             }
         }
@@ -212,8 +214,7 @@ public class Bot {
                 }
                 if (laneList[i].cybertruck) {
                     blocks.add("CYBERTRUCK");
-                }
-                else{
+                } else {
                     blocks.add(laneList[i].terrain);
                 }
             }
@@ -248,15 +249,14 @@ public class Bot {
     }
 
     // count boost and lizard
-    private int countBoostLizard(List<Object> blocks, int speed) {
+    private int countPowerUps(List<Object> blocks, int speed) {
         int count = 0;
         if (blocks.size() < speed) {
             speed = blocks.size();
         }
         for (int i = 0; i < speed; i++) {
-            if (blocks.get(i) == Terrain.BOOST) {
-                count += 1;
-            } else if (blocks.get(i) == Terrain.LIZARD) {
+            if (blocks.get(i) == Terrain.BOOST || blocks.get(i) == Terrain.LIZARD || blocks.get(i) == Terrain.EMP
+                    || blocks.get(i) == Terrain.TWEET || blocks.get(i) == Terrain.OIL_POWER) {
                 count += 1;
             }
         }
@@ -330,18 +330,21 @@ public class Bot {
                 if (bestRoute == curDamage) {
                     // opponent might accelerate/boost so add with the next speed state
                     int oppNextSpeed = getNearbySpeed(opponent.speed, 1);
-                    if (oppNextSpeed != -1){
-                        if (opponent.boostCounter >= 1){
+                    if (oppNextSpeed != -1) {
+                        if (opponent.boostCounter >= 1) {
                             // opponent most likely use boost here
                             actions.add(Pair.with(4,
-                                    new TweetCommand(opponent.position.lane, opponent.position.block + maxBoostSpeed + 1)));
+                                    new TweetCommand(opponent.position.lane,
+                                            opponent.position.block + maxBoostSpeed + 1)));
                         } else {
                             actions.add(Pair.with(4,
-                                    new TweetCommand(opponent.position.lane, opponent.position.block + oppNextSpeed + 1)));
+                                    new TweetCommand(opponent.position.lane,
+                                            opponent.position.block + oppNextSpeed + 1)));
                         }
                     } else {
                         actions.add(Pair.with(4,
-                            new TweetCommand(opponent.position.lane - 1, opponent.position.block + opponent.speed)));
+                                new TweetCommand(opponent.position.lane - 1,
+                                        opponent.position.block + opponent.speed)));
                     }
                 } else if (bestRoute == leftDamage) {
                     actions.add(Pair.with(4,
@@ -350,13 +353,15 @@ public class Bot {
                     actions.add(Pair.with(4,
                             new TweetCommand(opponent.position.lane + 1, opponent.position.block + opponent.speed)));
                 }
-            } 
-            // TEMPORARILY TURNED OFF, because its too risky to use cybertruck when we are behind
+            }
+            // TEMPORARILY TURNED OFF, because its too risky to use cybertruck when we are
+            // behind
             // else {
-            //     // just place cybertruck infront of the opponent's face, if we are behind
-            //     // #GREEDY
-            //     actions.add(Pair.with(4,
-            //             new TweetCommand(opponent.position.lane, opponent.position.block + opponent.speed + 1)));
+            // // just place cybertruck infront of the opponent's face, if we are behind
+            // // #GREEDY
+            // actions.add(Pair.with(4,
+            // new TweetCommand(opponent.position.lane, opponent.position.block +
+            // opponent.speed + 1)));
             // }
         }
 
@@ -368,9 +373,10 @@ public class Bot {
                 // if we are behind of the opponent and not in the same lane as them
                 // so that it wont affect us negatively
                 // if (myCar.position.lane != opponent.position.lane) {
-                //     actions.add(Pair.with(0, EMP));
+                // actions.add(Pair.with(0, EMP));
                 // }
-                // CURENTLY, just check if we are behind and the opponent is in the scope of EMP range
+                // CURENTLY, just check if we are behind and the opponent is in the scope of EMP
+                // range
                 // #GREEDY
                 actions.add(Pair.with(0, EMP));
             }
