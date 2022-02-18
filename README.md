@@ -32,20 +32,25 @@ _Greedy_ yang dilakukan kurang lebih untuk mencari _lane_ terbaik digunakan _gre
 ## Setup
 Untuk menjalankan permainan dibutuhkan:
 - Java Development Kit (Minimal 8)
-- IntelliJ IDEA atau Apache Maven (untuk melakukan build)
+- IntelliJ IDEA
 - NodeJS
+- Apache Maven
+- Starter Pack Overdrive, bisa diunduh [disini](https://github.com/EntelectChallenge/2020-Overdrive/releases/tag/2020.3.4)
 
 Untuk menggunakan bot sebenarnya tidak perlu di-_build_ lagi karena sudah ada versi _build_ paling baru pada _commit_ terakhir,jika ingin melakukan build:
 - Buka folder _repository_ pada IntelliJ IDEA
-- Akan muncul pop-up untuk melakukan _load_ terhadap Maven Projet
+- Akan muncul pop-up untuk melakukan _load_ terhadap Maven Projet atau jika tidak muncul bisa klik kanan pada `pom.xml` lalu `Add to maven project`
 - Load Maven Project tersebut
 - Di kanan atas nanti terlihat ada tulisan "Maven", klik tulisan tersebut
-- Lalu klik "JnCK-bot", "Lifecycle", dan "install"
+- Lalu klik "JnCK-bot", "Lifecycle", dan `install`
 - Hasil dari _build_ tersebut akan muncul di folder bin
 
 ## Usage
-Pada _repository_ tersedia _source code_ beserta _file jar_ dari bot yang kelompok kami buat. Untuk menggunakanyna:
-- Tempatkan folder _repository_ pada _root_ folder yang memiliki _game engine_ dari Overdrive. 
+Pada _repository_ tersedia _source code_ beserta _file jar_ dari bot yang kelompok kami buat. Untuk menggunakannya:
+- Download starter pack dari Overdrive untuk bisa menjalankan permainan
+- Extract starter pack tersebut
+- Lakukan `clone` atau unduh _repository_ ini
+- Tempatkan folder _repository_ pada _root_ folder yang sama tempat meng-_extract_ starter pack Overdrive. 
 - Edit konfigurasi _bot_ pada game-runner-config.json. 
 - Pilih 'player-a' ataupun 'player-b'
 - Edit path pada salah satu player yang dipilih menjadi menjadi "./" + folder _repository_
