@@ -36,11 +36,11 @@ Untuk menjalankan permainan dibutuhkan:
 - NodeJS
 
 ## Usage
-Pada _repository_ ini sudah tersedia JnCK-bot dan juga reference-bot (_bot_ default dari pihak Entelect) yang sudah di-_build_ sehingga sebenarnya tidak diperlukan _build_ lagi. Untuk menggunakan JnCK-bot, 
-- Tempatkan folder JnCK-bot pada _root_ folder yang _game engine_ dari Overdrive. 
+Pada _repository_ tersedia _source code_ beserta _file jar_ dari bot yang kelompok kami buat. Untuk menggunakanyna:
+- Tempatkan folder _repository_ pada _root_ folder yang memiliki _game engine_ dari Overdrive. 
 - Edit konfigurasi _bot_ pada game-runner-config.json. 
 - Pilih 'player-a' ataupun 'player-b'
-- Edit path pada salah satu player yang dipilih menjadi "./JnCK-bot/java"
+- Edit path pada salah satu player yang dipilih menjadi menjadi "./" + folder _repository_
 - Jalankan _command_ ``start run.bat`` atau klik dua kali pada file ``run.bat``di file explorer.
 
 
