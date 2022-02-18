@@ -35,6 +35,14 @@ Untuk menjalankan permainan dibutuhkan:
 - IntelliJ IDEA atau Apache Maven (untuk melakukan build)
 - NodeJS
 
+Untuk menggunakan bot sebenarnya tidak perlu di-_build_ lagi karena sudah ada versi _build_ paling baru pada _commit_ terakhir,jika ingin melakukan build:
+- Buka folder _repository_ pada IntelliJ IDEA
+- Akan muncul pop-up untuk melakukan _load_ terhadap Maven Projet
+- Load Maven Project tersebut
+- Di kanan atas nanti terlihat ada tulisan "Maven", klik tulisan tersebut
+- Lalu klik "JnCK-bot", "Lifecycle", dan "install"
+- Hasil dari _build_ tersebut akan muncul di folder bin
+
 ## Usage
 Pada _repository_ tersedia _source code_ beserta _file jar_ dari bot yang kelompok kami buat. Untuk menggunakanyna:
 - Tempatkan folder _repository_ pada _root_ folder yang memiliki _game engine_ dari Overdrive. 
