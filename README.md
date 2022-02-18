@@ -16,7 +16,7 @@
 
 
 ## General Information
-Overdrive adalah sebuah game yang mempertandingan 2 bot mobil dalam sebuah ajang balapan. Setiap pemain akan memiliki sebuah bot mobil dan masing-masing bot akan saling bertanding untuk mencapai garis finish dan memenangkan pertandingan. Agar dapat memenangkan pertandingan, setiap pemain harus mengimplementasikan strategi tertentu untuk dapat mengalahkan lawannya. 
+[Overdrive](https://github.com/EntelectChallenge/2020-Overdrive) adalah sebuah game yang mempertandingan 2 bot mobil dalam sebuah ajang balapan. Setiap pemain akan memiliki sebuah bot mobil dan masing-masing bot akan saling bertanding untuk mencapai garis finish dan memenangkan pertandingan. Agar dapat memenangkan pertandingan, setiap pemain harus mengimplementasikan strategi tertentu untuk dapat mengalahkan lawannya. 
 
 Pada tugas besar ini, setiap kelompok diminta untuk membuat sebuah bot yang akan diadu dengan bot kelompok lain pada permainan Overdrive di kompetisi Tubes 1. Bot tersebut mengimplementasikan algoritma greedy yang berperan sebagai strategi bot agar dapat menyelesaikan fungsi objektif dari permainan Overdrive, yaitu memenangkan permainan dengan cara mencapai garis finish lebih awal atau mencapai garis finish bersamaan tetapi dengan kecepatan lebih besar atau memiliki skor terbesar jika kedua komponen tersebut masih bernilai imbang. 
 

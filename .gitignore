@@ -51,6 +51,6 @@ fabric.properties
 \.idea/
 *.iml
 
+*.vscode/*
 target/*
-*.jar 
 *bot/rounds/*
